@@ -145,8 +145,9 @@ class Motion:
         
         self.dtheta=0
         self.dphi = sqrt(G*self.m_num/self.r_num**3) #Orbital Velocity in spacetime
-       
-        self.dr=0
+        self.a=self.r_num
+        v_total=np.sqrt(G*Mass_Of_Sun/self.r_num*(2-(self.r_num/self.a)))
+        self.dr=np.sqrt(v_total**2-(G*Mass_Of_Sun/self.r_num))
       
         self.R_NUMS=[self.t_num, self.r_num, self.theta_num,self.phi_num]
         print(f"Initial Motion Of Planet:{self.name}")
