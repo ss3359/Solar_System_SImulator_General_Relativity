@@ -57,7 +57,7 @@ mp.dps=50 # Set the desired percision (50 decimal places)
 epsilon =1e-6 #Small Buffer to prevent division by near zero values
 max_dr=1e-3
 COLORS=["orange","green", "blue","red", "indigo", "purple","olive","cyan"]
-iterations=10
+iterations=1000
 Mass_Of_Sun=1.989e30 #Mass of the sun in kg
 
 
@@ -147,7 +147,8 @@ class Motion:
         self.dphi = sqrt(G*self.m_num/self.r_num**3) #Orbital Velocity in spacetime
         self.a=self.r_num
         v_total=np.sqrt(G*Mass_Of_Sun/self.r_num*(2-(self.r_num/self.a)))
-        self.dr=np.sqrt(v_total**2-(G*Mass_Of_Sun/self.r_num))
+        self.dr=1e3
+        # self.dr=np.sqrt(v_total**2-(G*Mass_Of_Sun/self.r_num))
       
         self.R_NUMS=[self.t_num, self.r_num, self.theta_num,self.phi_num]
         print(f"Initial Motion Of Planet:{self.name}")
@@ -206,8 +207,7 @@ class Motion:
         v_nums=[T,R,THETA,PHI]
         dv_nums=[DT,DR,DTHETA,DPHI]
        
-        h=0.005 #time step.
-        CH_Symbols_To_Use=[]
+        h=0.15#time step in seconds.
         low=-1e-5
         high=1e5
         
@@ -220,7 +220,6 @@ class Motion:
         VELOCITY_VECTORS=[]
         CH_Symbols=self.Christoffell()
         for iter in range(iterations): 
-
             j1=0
             j2=0
             j3=0
@@ -231,7 +230,10 @@ class Motion:
             k3=0
             k4=0 
             for i in range(4):
+                # if(i==1):
+                #     h=7600/c
                 sigma=i
+                
                 
                 #RK4 Method for the First and Second Linear ODE Componentwise
                 #Position And Velocity Of The Body
@@ -308,20 +310,27 @@ class Planet:
         Position_Vectors,Velocity_Vectors=m.GeodesicEquations()
         return Position_Vectors,Velocity_Vectors
     
-    def PlotOrbit(self,points): 
-        P,V=self.GetPositionAndVelocity()
+    def PlotOrbit(self,names,Colors,points):
+
+        r_max=max(max(p[1] for p in planet if isinstance(p[1], (int,float))) for planet in points) 
+        # print(f"R_max: {r_max}")
+        # breakpoint()
         fig,ax=plt.subplots(figsize=(6,6))
-        ax.set_xlim(-1.6,1.6)
-        ax.set_ylim(-1.6,1.6)
+        ax.set_xlim(-1.2*r_max,1.2*r_max)
+        ax.set_ylim(-1.2*r_max,1.2*r_max)
         ax.set_xlabel("X (m)")
         ax.set_ylabel("Y (m)")
 
-        #Plot The Sun
-        # ax.scatter(0,0,color="yellow", s= 200,label="Sun")
-        # print(f"Position Vectors:{P}")
-        # for p in P:
-        #     ax.scatter(p[1]*math.cos(p[3]),p[1]*math.sin(p[3]),color=self.color,label=self.name)
-    
+        # Plot The Sun
+        ax.scatter(0,0,color="yellow", s=20,label="Sun",edgecolors="black")
+        
+        for i, planet in enumerate(points):
+            p_x=[p[1]*math.cos(p[3]) for p in planet]
+            p_y=[p[1]*math.sin(p[3]) for p in planet]
+
+            ax.plot(p_x,p_y,marker="o",markersize=3,linestyle="-",color=Colors[i],label=names[i])
+        ax.legend()
+        plt.show()
 #Main Function
 def main(): 
     
@@ -375,18 +384,24 @@ def main():
         
     }
 
-
+    Collection_Of_Points=[]
+    Names=[]
+    Colors=[]
     for name, data in PLANETS.items():
         P_data=data.get("Position")
         Color=data.get("Color")
         Name=name
-        # if(Name=="Uranus"):
-        #     breakpoint()
         planet=Planet(P_data[0],P_data[1],P_data[2],P_data[3],Color,Name,data.get("Mass"))
         
         P_Vectors,V_Vectors=planet.GetPositionAndVelocity()
-        print("Position Vectors: ", P_Vectors)
-        planet.PlotOrbit(P_Vectors)
+        # if(name=="Saturn"):
+        #     breakpoint()
+        Collection_Of_Points.append(P_Vectors)
+        Names.append(name)
+        Colors.append(data["Color"])
+        # if(name=="Saturn"):
+        #     print(f"Points for {name}: {Collection_Of_Points}")
+    planet.PlotOrbit(Names,Colors,Collection_Of_Points)
 
 
 
@@ -394,77 +409,3 @@ def main():
 
 main()
 
-'''
-
-   # Initial Conditions For Circular Orbit
-    t=0
-    M=6.3e10**19 #Mass Of the Object
-    r=500*M #Start position
-    phi=0
-    theta=np.radians(math.pi/2)
-   
-
-T=Motion(t,r,theta,phi,M)
-    T.GeodesicEquations()
-
-      #Spherical Coordinates
-        self.r=sqrt(x**2+y**2+z**2)
-        self.theta=0
-        self.phi=np.radians(math.pi/2)
-        # self.theta=np.arctan(y/x)
-        # self.phi=np.arccos(self.z/self.r)
-
-          if abs(CH_num4) > 1e5:
-                            print(f"WARNING: Large Christoffel symbol at tau={TAU}: {CH_num4}")
-                            CH_num4=0
-
-
-                    #Christoffell Symbols in question  
-                    # p1=diff(g[sigma,mu],v[mu])
-                    # p2=diff(g[sigma,mu],v[nu])
-                    # p3=diff(g[mu,nu],v[sigma])
-                    # print(f"∂g_{sigma}{mu}/∂v{mu}={p1}") 
-                    # print(f"∂g_{sigma}{mu}/∂v{nu}={p2}") 
-                    # print(f"∂g_{mu}{nu}/∂v{sigma}={p3}")  
-
-
-                      
-    # def GetAppropriateChristoffellSymbol(self,mu,nu,sigma): 
-    #     Γ_array=self.Christoffell()
-    #     for m in range(4):
-    #         for n in range(4): 
-    #             for s in range(4): 
-    #                 if(sigma==s):
-    #                     return [Γ_array[m][n][s],m,n]
-                        
-              # print("Metric tensor", g)
-        # print("SC Metric: ", g)
-        # print(f"Determinant of g: {g.det()}")      
-        # 
-        #   # self.dr=max(-self.dphi**2*self.r_num/self.dt_discriminant,1e6)
-        # if self.d_phi_denominator>0 else 0 # (GM/r)Circular orbit approximation
-        # if self.dt_discriminant>0:
-        #     self.dr=-self.dphi**2*self.r_num/self.dt_discriminant
-        # else: 
-        #     self.dr=0
-         # if(abs(j1)>0.1):
-                        #     h*=0.5
-                        #     h=min(h, 1e-4)
-      #Set The Initial Condition Again To Compute RK for various coordinates
-            # CH_Symbols_To_Use.clear()  
-            # T=self.t_num
-            # R=self.r_num
-            # THETA=self.theta_num
-            # PHI=self.phi_num
-
-             # print(f"Velocity at tau={TAU} with respect to the coordinate: {i}: {dv_nums[i]}")
-                # print(f"Position at tau={TAU} with respect to the coordinate: {i}: {v_nums[i]}")
-
-
-                  # print(f"tau:{TAU}, j1:{j1}, j2:{j2}, j3:{j3}, j4:{j4}")
-                # print(f"tau:{TAU}, k1:{k1}, k2:{k2}, k3:{k3}, k4:{k4}")
-     
-'''
-
-
-  
