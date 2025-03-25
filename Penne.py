@@ -37,10 +37,6 @@ theta=arctan(y/x)
 
 
 
-Also, here is some information regarding to initial conditions: 
-
-
-
 Let us begin with the code 
 '''
 
